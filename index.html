@@ -1,0 +1,962 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="logo1.png" type="image/png">
+    <title>Viewst</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* 🎨 متغيرات الألوان الأصلية 🎨 */
+        :root {
+            --gradient-light: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --gradient-dark: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --text-light: #2d3748;
+            --text-dark: #f7fafc;
+            --bubble-user-light: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            --bubble-user-dark: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            --bubble-ai-light: #ffffff;
+            --bubble-ai-dark: #2d3748;
+            --bubble-border-light: rgba(0,0,0,0.08);
+            --bubble-border-dark: rgba(255,255,255,0.1);
+            --bg-light: #f7fafc;
+            --bg-dark: #1a202c;
+            --container-light: rgba(255,255,255,0.95);
+            --container-dark: rgba(26,32,44,0.98);
+            --input-bg-light: #edf2f7;
+            --input-bg-dark: #2d3748;
+            --input-focus-light: #ffffff;
+            --input-focus-dark: #4a5568;
+            --input-area-light: #ffffff;
+            --input-area-dark: #1a202c;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: var(--gradient-light);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            transition: background 0.5s ease, color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: var(--gradient-dark);
+            color: var(--text-dark);
+        }
+
+        .container {
+            background: var(--container-light);
+            width: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+            transition: background 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        body.dark-mode .container {
+            background: var(--container-dark);
+        }
+
+        .header {
+            background: var(--bubble-user-light);
+            color: white;
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 1.5px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .header .logo-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+            overflow: hidden;
+        }
+
+        .header .logo-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .status {
+            font-size: 13px;
+            opacity: 0.95;
+            background: rgba(255,255,255,0.15);
+            padding: 4px 12px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1) rotate(20deg);
+        }
+
+        .chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: var(--bg-light);
+            transition: background 0.3s ease;
+        }
+
+        body.dark-mode .chat {
+            background: var(--bg-dark);
+        }
+
+        .chat::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat::-webkit-scrollbar-thumb {
+            background: rgba(0, 123, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        body.dark-mode .chat::-webkit-scrollbar-thumb {
+            background: rgba(0, 123, 255, 0.5);
+        }
+        
+        /* Message styling */
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+            position: relative;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user { flex-direction: row-reverse; }
+        .ai { flex-direction: row; }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .user .avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .ai .avatar {
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+        }
+
+        .ai .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        /* دوران الشعار عند التفكير */
+        .ai .avatar.thinking img {
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .bubble {
+            padding: 16px 20px;
+            border-radius: 20px;
+            max-width: 70%;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            font-size: 15px;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .bubble:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+
+        .user .bubble {
+            background: var(--bubble-user-light);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        body.dark-mode .user .bubble {
+            background: var(--bubble-user-dark);
+        }
+
+        .ai .bubble {
+            background: var(--bubble-ai-light);
+            color: #2d3748;
+            border: 1px solid var(--bubble-border-light);
+            border-bottom-left-radius: 6px;
+        }
+
+        body.dark-mode .ai .bubble {
+            background: var(--bubble-ai-dark);
+            color: #f7fafc;
+            border-color: var(--bubble-border-dark);
+        }
+
+        .action-buttons {
+            position: absolute;
+            top: 8px;
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .bubble:hover .action-buttons {
+            opacity: 1;
+        }
+
+        .user .action-buttons { left: 8px; }
+        .ai .action-buttons { right: 8px; }
+        
+        .action-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.1);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        body.dark-mode .action-btn {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-dark);
+        }
+
+        body.dark-mode .action-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .image-msg img {
+            max-width: 100%;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .image-msg img:hover {
+            transform: scale(1.02);
+        }
+
+        .image-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .image-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .image-btn:hover {
+            background: rgba(0, 123, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        body.dark-mode .image-btn {
+            background: rgba(0, 123, 255, 0.2);
+            color: #9fa8da;
+        }
+
+        body.dark-mode .image-btn:hover {
+            background: rgba(0, 123, 255, 0.3);
+        }
+
+        .translation-hint {
+            padding: 8px 16px;
+            background: rgba(0, 123, 255, 0.08);
+            border-radius: 12px;
+            font-size: 13px;
+            color: #007bff;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .translation-hint {
+            background: rgba(0, 123, 255, 0.15);
+            color: #9fa8da;
+        }
+
+        .style-selector {
+            display: flex;
+            gap: 8px;
+            padding: 8px 24px;
+            background: var(--input-area-light);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        body.dark-mode .style-selector {
+            background: var(--input-area-dark);
+            border-top-color: rgba(255,255,255,0.05);
+        }
+
+        .style-btn {
+            padding: 6px 14px;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            background: var(--input-bg-light);
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Cairo', sans-serif;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .style-btn:hover {
+            background: rgba(0, 123, 255, 0.1);
+            border-color: #007bff;
+        }
+
+        .style-btn.active {
+            background: var(--bubble-user-light);
+            color: white;
+            border-color: transparent;
+        }
+
+        body.dark-mode .style-btn {
+            background: var(--input-bg-dark);
+            color: var(--text-dark);
+        }
+
+        body.dark-mode .style-btn:hover {
+            background: rgba(0, 123, 255, 0.2);
+            border-color: #007bff;
+        }
+
+        body.dark-mode .style-btn.active {
+            background: var(--bubble-user-dark);
+        }
+
+        .input-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 24px;
+            background: var(--input-area-light);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .input-area {
+            background: var(--input-area-dark);
+            border-top-color: rgba(255,255,255,0.05);
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input {
+            width: 100%;
+            border: 2px solid transparent;
+            border-radius: 24px;
+            padding: 12px 18px;
+            font-size: 15px;
+            background: var(--input-bg-light);
+            resize: none;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s ease;
+            color: var(--text-light);
+            max-height: 120px;
+        }
+
+        .input:focus {
+            outline: none;
+            background: var(--input-focus-light);
+            border-color: #007bff;
+            box-shadow: 0 4px 16px rgba(0, 123, 255, 0.15);
+        }
+
+        body.dark-mode .input {
+            background: var(--input-bg-dark);
+            color: var(--text-dark);
+        }
+
+        body.dark-mode .input:focus {
+            background: var(--input-focus-dark);
+            border-color: #007bff;
+            box-shadow: 0 4px 16px rgba(0, 123, 255, 0.25);
+        }
+
+        .btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            background: var(--bubble-user-light);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+            flex-shrink: 0;
+        }
+
+        body.dark-mode .btn {
+            background: var(--bubble-user-dark);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn:not(:disabled):hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.4);
+        }
+
+        body.dark-mode .btn:not(:disabled):hover {
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.5);
+        }
+
+        .btn:not(:disabled):active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            right: 50%;
+            transform: translateX(50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1000;
+            animation: toastIn 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(50%) translateY(0);
+            }
+        }
+
+        footer {
+            text-align: center;
+            padding: 16px;
+            font-size: 13px;
+            opacity: 0.85;
+            color: #e2e8f0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            /* إضافة خلفية مناسبة للوضع الفاتح */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        }
+        
+        body.dark-mode footer {
+             background: var(--gradient-dark);
+        }
+
+        @media (max-width: 768px) {
+            .bubble {
+                max-width: 85%;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .style-selector {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="logo-img">
+                    <img src="logo.png" alt="Viewst Logo">
+                </div>
+                <h1>Viewst</h1>
+                <div class="status" id="status">جاهز ✓</div>
+            </div>
+            <button id="themeToggle" class="theme-toggle" title="تبديل الوضع">🌙</button>
+        </div>
+
+        <div class="style-selector">
+            <button class="style-btn active" data-style="text2img">عادي</button>
+            <button class="style-btn" data-style="anime">أنمي</button>
+            <button class="style-btn" data-style="fantasy">خيالي</button>
+            <button class="style-btn" data-style="photorealistic">واقعي</button>
+            <button class="style-btn" data-style="abstract">تجريدي</button>
+            <button class="style-btn" data-style="portrait">بورتريه</button>
+        </div>
+
+        <div class="chat" id="chat"></div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <div class="translation-hint" id="translationHint" style="display: none;"></div>
+                <textarea id="input" class="input" placeholder="اكتب رسالتك أو صف الصورة التي ترغب بتوليدها..." rows="1"></textarea>
+            </div>
+            <button id="imgBtn" class="btn" title="توليد صورة">🎨</button>
+            <button id="sendBtn" class="btn" title="إرسال">➤</button>
+        </div>
+    </div>
+    <footer>© 2025 Viewst — جميع الحقوق محفوظة</footer>
+    <script>
+        // ***********************************************
+        // ** ⚠️ يجب استبدال هذا بمفتاح Gemini API صالح ⚠️ **
+        // ***********************************************
+        const API_KEY = "AIzaSyB5suX3XyKu9FD567xr_jIPsGSWYem51kg"; 
+        const TEXT_MODEL = "gemini-2.5-flash"; 
+        const USER_AVATAR_TEXT = '👤'; 
+
+        const chat = document.getElementById('chat');
+        const input = document.getElementById('input');
+        const sendBtn = document.getElementById('sendBtn');
+        const imgBtn = document.getElementById('imgBtn');
+        const status = document.getElementById('status');
+        const themeToggle = document.getElementById('themeToggle');
+        const translationHint = document.getElementById('translationHint');
+        const styleButtons = document.querySelectorAll('.style-btn');
+
+        let currentStyle = 'text2img';
+
+        // --- Theme Toggle ---
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
+        }
+        themeToggle.addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+
+        // --- Style Selector ---
+        styleButtons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                styleButtons.forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                currentStyle = btn.getAttribute('data-style');
+            });
+        });
+
+        // --- Input and Arabic Check Logic ---
+        function isArabic(text) {
+            const arabicRegex = /[\u0600-\u06FF]/g;
+            const arabicChars = (text.match(arabicRegex) || []).length;
+            return arabicChars > (text.length * 0.5); 
+        }
+        
+        input.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            const text = this.value.trim();
+            if (isArabic(text)) {
+                 translationHint.textContent = '📝 الوصف عربي، سيتم ترجمته تلقائياً لتوليد صورة أدق.';
+                 translationHint.style.display = 'block';
+            } else if (text.length > 0) {
+                 translationHint.textContent = '📝 الوصف إنجليزي، جاهز للتوليد.';
+                 translationHint.style.display = 'block';
+            } else {
+                translationHint.style.display = 'none';
+            }
+        });
+
+        // --- Helper Functions (Toast, Copy, Download) ---
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, 2000);
+        }
+
+        function copyText(text) {
+            const tempText = text.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '');
+            navigator.clipboard.writeText(tempText).then(function() {
+                showToast('تم نسخ الرسالة ✓');
+            }).catch(function() {
+                showToast('فشل النسخ ❌');
+            });
+        }
+
+        function downloadImage(url) {
+             fetch(url)
+                .then(res => res.blob())
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'viewst-image-' + Date.now() + '.png';
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    showToast('تم تحميل الصورة ✓');
+                })
+                .catch(() => { showToast('فشل التحميل ❌'); });
+        }
+        
+        // --- Add Message Functions ---
+        function addMessage(role, html, rawText) {
+            const msg = document.createElement('div');
+            msg.className = 'message ' + role;
+            msg.setAttribute('data-timestamp', Date.now()); 
+
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            
+            if (role === 'user') {
+                avatar.textContent = USER_AVATAR_TEXT;
+            } else {
+                const img = document.createElement('img');
+                img.src = 'logo.png';
+                img.alt = 'Viewst AI';
+                avatar.appendChild(img);
+            }
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.innerHTML = html;
+
+            const actions = document.createElement('div');
+            actions.className = 'action-buttons';
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'action-btn';
+            copyBtn.innerHTML = '📋';
+            copyBtn.title = 'نسخ';
+            copyBtn.onclick = function() { copyText(rawText || html); }; 
+            actions.appendChild(copyBtn);
+
+            bubble.appendChild(actions);
+            msg.appendChild(avatar);
+            msg.appendChild(bubble); 
+            chat.appendChild(msg);
+            chat.scrollTop = chat.scrollHeight;
+            return avatar; 
+        }
+
+        function addImage(role, url, originalText) {
+            const msg = document.createElement('div');
+            msg.className = 'message ' + role;
+            msg.setAttribute('data-timestamp', Date.now());
+
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            if (role === 'user') {
+                avatar.textContent = USER_AVATAR_TEXT;
+            } else {
+                const img = document.createElement('img');
+                img.src = 'logo.png';
+                img.alt = 'Viewst AI';
+                avatar.appendChild(img);
+            }
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'image-msg';
+
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = 'صورة مولدة';
+            
+            const description = document.createElement('div');
+            description.textContent = 'الوصف: ' + originalText;
+            description.style.marginTop = '8px';
+            description.style.fontSize = '14px';
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'image-actions';
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'image-btn';
+            downloadBtn.innerHTML = '⬇️ تحميل';
+            downloadBtn.onclick = function() { downloadImage(url); };
+
+            const copyDescBtn = document.createElement('button');
+            copyDescBtn.className = 'image-btn';
+            copyDescBtn.innerHTML = '📋 نسخ الوصف';
+            copyDescBtn.onclick = function() { copyText(originalText); };
+
+            actionsDiv.appendChild(downloadBtn);
+            actionsDiv.appendChild(copyDescBtn);
+
+            imageContainer.appendChild(img);
+            imageContainer.appendChild(description);
+            imageContainer.appendChild(actionsDiv);
+
+            bubble.appendChild(imageContainer);
+            msg.appendChild(avatar);
+            msg.appendChild(bubble);
+            chat.appendChild(msg);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // --- Gemini Translation Function (New/Improved) ---
+        async function translateAndEnhancePrompt(arabicPrompt) {
+            const prompt = `Translate the following Arabic text into an extremely detailed and highly cinematic English prompt for a text-to-image AI model. Focus on style, lighting, and specific details, without adding any extra commentary, just the translated prompt.
+            Arabic Prompt: "${arabicPrompt}"`;
+
+            try {
+                const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + TEXT_MODEL + ':generateContent?key=' + API_KEY, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] })
+                });
+                
+                const data = await res.json();
+                // تنظيف الرد وإزالة أي علامات اقتباس محيطة
+                let translated = data?.candidates?.[0]?.content?.parts?.[0]?.text || arabicPrompt;
+                return translated.replace(/^['"]|['"]$/g, ''); 
+            } catch (e) {
+                console.error('Gemini translation error, falling back to original text:', e);
+                return arabicPrompt; 
+            }
+        }
+
+        // --- Send Text Message Function ---
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (!text) return;
+
+            addMessage('user', text, text);
+            input.value = '';
+            input.style.height = 'auto';
+            translationHint.style.display = 'none';
+            
+            const thinkingAvatar = addMessage('ai', '...', '...').parentNode.querySelector('.avatar');
+            thinkingAvatar.classList.add('thinking');
+            
+            status.textContent = 'جارٍ التفاعل...';
+            sendBtn.disabled = true;
+            imgBtn.disabled = true;
+
+            try {
+                const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + TEXT_MODEL + ':generateContent?key=' + API_KEY, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: text }] }] })
+                });
+                
+                const data = await res.json();
+                const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "تعذر الحصول على رد. (الرجاء التحقق من API Key).";
+                const formattedReply = reply.replace(/\n/g, '<br>');
+                
+                // إزالة رسالة الـ AI المؤقتة
+                thinkingAvatar.parentNode.remove();
+
+                // إضافة رسالة الرد الفعلية
+                addMessage('ai', formattedReply, reply);
+                
+                status.textContent = 'جاهز ✓';
+            } catch (e) {
+                // إزالة رسالة الـ AI المؤقتة في حالة الخطأ
+                thinkingAvatar.parentNode.remove(); 
+                
+                addMessage('ai', 'حدث خطأ في الاتصال، حاول مجددًا. (خطأ في الشبكة أو API).', 'حدث خطأ في الاتصال، حاول مجددًا.');
+                status.textContent = 'انقطاع في الاتصال ❌';
+            } finally {
+                sendBtn.disabled = false;
+                imgBtn.disabled = false;
+            }
+        }
+
+        // --- Generate Image Function (Now with Arabic Translation Fix) ---
+        async function generateImage() {
+            const text = input.value.trim();
+            if (!text) {
+                showToast('اكتب وصفاً للصورة أولاً');
+                return;
+            }
+
+            const originalText = text;
+            let promptToUse = text;
+
+            addMessage('user', originalText, originalText);
+            input.value = '';
+            input.style.height = 'auto';
+            translationHint.style.display = 'none';
+            
+            const thinkingAvatar = addMessage('ai', '...', '...').parentNode.querySelector('.avatar');
+            thinkingAvatar.classList.add('thinking');
+
+            status.textContent = 'جارٍ التحسين والترجمة...';
+            imgBtn.disabled = true;
+            sendBtn.disabled = true;
+
+            try {
+                // ** إصلاح الخطأ: الترجمة التلقائية للعربية عبر Gemini **
+                if (isArabic(originalText)) {
+                    promptToUse = await translateAndEnhancePrompt(originalText);
+                    status.textContent = 'جارٍ توليد الصورة بالوصف المُحسَّن...';
+                } else {
+                    status.textContent = 'جارٍ توليد الصورة...';
+                }
+
+                // تطبيق النمط المحدد
+                const stylePrompts = {
+                    text2img: promptToUse,
+                    anime: promptToUse + ', anime style, colorful, detailed',
+                    fantasy: promptToUse + ', fantasy art, magical, epic',
+                    photorealistic: promptToUse + ', photorealistic, ultra detailed, 8k',
+                    abstract: promptToUse + ', abstract art, creative, modern',
+                    portrait: promptToUse + ', portrait, detailed face, professional'
+                };
+
+                let enhanced = stylePrompts[currentStyle] || promptToUse;
+                enhanced += ', high quality, masterpiece';
+
+                // استخدام API توليد الصور (Pollinations)
+                const seed = Math.floor(Math.random() * 1000000);
+                const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(enhanced) + '?width=1024&height=1024&seed=' + seed + '&nologo=true';
+
+                const res = await fetch(url, { method: 'GET', mode: 'cors' });
+                if (!res.ok) throw new Error('خطأ من خادم التوليد');
+                
+                // إزالة رسالة الـ AI المؤقتة
+                thinkingAvatar.parentNode.remove();
+
+                addImage('ai', url, originalText);
+                status.textContent = 'تم التوليد ✓';
+                showToast('تم إنشاء الصورة ✓');
+            } catch (e) {
+                console.error("Image generation error:", e);
+                // إزالة رسالة الـ AI المؤقتة في حالة الخطأ
+                thinkingAvatar.parentNode.remove();
+
+                addMessage('ai', 'تعذر توليد الصورة، تأكد من مفتاح الـ API ووصف الصورة.', 'تعذر توليد الصورة، تأكد من مفتاح الـ API ووصف الصورة.');
+                status.textContent = 'خطأ في التوليد ❌';
+            } finally {
+                imgBtn.disabled = false;
+                sendBtn.disabled = false;
+                // التأكد من إزالة فئة الدوران
+                if (thinkingAvatar && thinkingAvatar.classList.contains('thinking')) {
+                    thinkingAvatar.classList.remove('thinking');
+                }
+            }
+        }
+
+        // --- Event Listeners ---
+        sendBtn.addEventListener('click', sendMessage);
+        imgBtn.addEventListener('click', generateImage);
+
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(); 
+            }
+        });
+        
+        // --- Initial Message ---
+        setTimeout(function() {
+            addMessage('ai', 'مرحباً! أنا Viewst، مساعدك الذكي لتوليد الصور والدردشة. لتوليد صورة اضغط على زر "🎨".', 'مرحباً! أنا Viewst، مساعدك الذكي لتوليد الصور والدردشة. لتوليد صورة اضغط على زر "🎨".');
+        }, 500);
+    </script>
+</body>
+</html>
